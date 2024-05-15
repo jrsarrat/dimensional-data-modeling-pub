@@ -1,5 +1,5 @@
 import os
-from util import get_logger, get_submissions, get_submission_dir, get_trino_creds, get_runtime_env
+from util import get_logger, get_submissions, get_submission_dir, get_trino_creds, get_runtime_env, get_changed_files
 from trino.dbapi import connect
 from trino.auth import BasicAuthentication
 
@@ -61,10 +61,12 @@ def run_tests(filename, submission):
   return passed, results
 
 
-def main():    
-  submissions = get_submissions(submission_dir)
+def main(submissions: dict, files_to_process: list):
   if not submissions:
     logger.info('WARNING: No submissions found')
+    return None
+  if not files_to_process:
+    logger.info('WARNING: No files specified for processing')
     return None
   
   initalized, results = init_trino()
@@ -74,6 +76,8 @@ def main():
   valid_submissions = {}
   comments = []
   for filename, submission in submissions.items():
+    file_path = os.path.join(submission_dir, filename)
+    if file_path in files_to_process:
       passed, comment = run_tests(filename, submission)
       if not passed:
           comments.append(comment)
@@ -88,5 +92,7 @@ def main():
 
 
 if __name__ == "__main__":
-  passed, comment = main()
+  submissions = get_submissions(submission_dir)
+  files_to_process = get_changed_files()
+  passed, comment = main(submissions, files_to_process)
   print(comment)
