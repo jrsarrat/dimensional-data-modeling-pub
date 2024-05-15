@@ -10,8 +10,7 @@ trino_host, trino_port, trino_username, trino_password, trino_catalog, trino_sch
 
 
 assignment_schema = os.environ.get('ASSIGNMENT_SCHEMA')
-drop_sql = f"DROP SCHEMA IF EXISTS {assignment_schema} CASCADE"
-create_sql = f"CREATE SCHEMA {assignment_schema}"
+create_sql = f"CREATE SCHEMA IF NOT EXISTS {assignment_schema}"
 use_sql = f"USE {assignment_schema}"
 
 
@@ -27,7 +26,6 @@ def init_trino():
         auth=BasicAuthentication(trino_username, trino_password),
     )
     cur = conn.cursor()
-    cur.execute(drop_sql)
     cur.execute(create_sql)
     return True, 'Success'
   except Exception as e:
