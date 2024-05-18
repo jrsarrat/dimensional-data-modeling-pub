@@ -25,7 +25,6 @@ jobs:
     outputs:
       all_changed_submission_files: ${{ steps.filtered-changed-files.outputs.all_changed_submission_files }}
       any_submission_changes: ${{ steps.filtered-changed-files.outputs.any_submission_changes }}
-      head_commit_sha: ${{ steps.get_pr.outputs.head_commit_sha }}
     steps:
       - name: Checkout base repository
         uses: actions/checkout@v4
@@ -34,15 +33,6 @@ jobs:
           ref: ${{ github.event.inputs.base_branch }}
           token: ${{ secrets.PAT_TOKEN }}
           fetch-depth: 0
-      - name: Get pull request head branch and commit
-        id: get_pr
-        env:
-          GH_TOKEN: ${{ secrets.PAT_TOKEN }}
-        run: |
-          pr_number=${{ github.event.inputs.pr_number }}
-          pr_info=$(gh pr view $pr_number --json headRefName,headRepository,headRefOid --jq '.')
-          head_commit_sha=$(echo $pr_info | jq -r '.headRefOid')
-          echo "head_commit_sha=$head_commit_sha" >> $GITHUB_ENV
       - name: Get all changed files in the submission folder
         id: tj-actions-changed-files
         uses: tj-actions/changed-files@v44
