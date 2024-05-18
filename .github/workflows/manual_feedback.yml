@@ -34,7 +34,6 @@ jobs:
           ref: ${{ github.event.inputs.base_branch }}
           token: ${{ secrets.PAT_TOKEN }}
           fetch-depth: 0
-
       - name: Get pull request head branch and commit
         id: get_pr
         env:
@@ -42,21 +41,8 @@ jobs:
         run: |
           pr_number=${{ github.event.inputs.pr_number }}
           pr_info=$(gh pr view $pr_number --json headRefName,headRepository,headRefOid --jq '.')
-          head_ref=$(echo $pr_info | jq -r '.headRefName')
-          head_repo=$(echo $pr_info | jq -r '.headRepository.fullName')
           head_commit_sha=$(echo $pr_info | jq -r '.headRefOid')
-          echo "head_ref=$head_ref" >> $GITHUB_ENV
-          echo "head_repo=$head_repo" >> $GITHUB_ENV
-          echo "head_commit_sha=$head_commit_sha" >> $GITHUB_OUTPUT
-
-      - name: Checkout PR head commit
-        uses: actions/checkout@v4
-        with:
-          repository: ${{ env.head_repo }}
-          ref: ${{ needs.check_files.outputs.head_commit_sha }}
-          token: ${{ secrets.PAT_TOKEN }}
-          fetch-depth: 0
-
+          echo "head_commit_sha=$head_commit_sha" >> $GITHUB_ENV
       - name: Get all changed files in the submission folder
         id: tj-actions-changed-files
         uses: tj-actions/changed-files@v44
@@ -66,14 +52,12 @@ jobs:
             .github/**/*
             _app/**
             Dockerfile
-      
       - name: Get changed submission files in PR
         id: filtered-changed-files
         run: |
           all_changed_submission_files="${{ steps.tj-actions-changed-files.outputs.all_changed_files }}"
           echo "List of submission files changed in PR: '$all_changed_submission_files'"
           echo "all_changed_submission_files=$all_changed_submission_files" >> $GITHUB_OUTPUT
-          
           any_submission_changes=$(if [ -n "$all_changed_submission_files" ]; then echo 'true'; else echo 'false'; fi)
           echo "Any changes: $any_submission_changes"
           echo "any_submission_changes=$any_submission_changes" >> $GITHUB_OUTPUT
@@ -89,9 +73,6 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-        with:
-          ref: ${{ needs.check_files.outputs.head_commit_sha }}
-      
       - name: Generate variables using GitHub context
         id: get_variables
         run: |
@@ -121,8 +102,6 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-        with:
-          ref: ${{ needs.check_files.outputs.head_commit_sha }}
       - name: Add GitHub environment variables to '.env' file
         run: env > .env
       - name: Build the Docker image
